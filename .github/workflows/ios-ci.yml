@@ -43,7 +43,7 @@ jobs:
             -scheme CameraAccess \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4" \
+            -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4.1" \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -56,7 +56,7 @@ jobs:
             -project ios/ParkPilot/CameraAccess.xcodeproj \
             -scheme CameraAccess \
             -configuration Debug \
-            -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4" \
+            -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4.1" \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
