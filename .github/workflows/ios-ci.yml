@@ -57,9 +57,8 @@ jobs:
             -scheme CameraAccess \
             -configuration Debug \
             -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4.1" \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath "$RUNNER_TEMP/TestDerivedData" \
+            -resultBundlePath "$RUNNER_TEMP/CameraAccessTests.xcresult" \
             -only-testing:CameraAccessTests \
             test | tee "$RUNNER_TEMP/ios-test.log"
 
@@ -71,6 +70,7 @@ jobs:
           path: |
             ${{ runner.temp }}/ios-build.log
             ${{ runner.temp }}/ios-test.log
+            ${{ runner.temp }}/CameraAccessTests.xcresult
           if-no-files-found: ignore
 
   backend-tests:
