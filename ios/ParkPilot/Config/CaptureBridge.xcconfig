@@ -1,7 +1,6 @@
 // Safe defaults for local development. Keep real credentials in the ignored
 // CaptureBridge.local.xcconfig file beside this one.
 META_APP_ID = 0
-CLIENT_TOKEN = 0
 CAPTURE_BRIDGE_URL = http://127.0.0.1:8000
 CAPTURE_BRIDGE_API_KEY =
 

@@ -49,31 +49,29 @@ Open `http://127.0.0.1:8000/docs` for the generated API explorer.
 
 ## Configure Meta and run iOS
 
-1. In the Apple Developer portal, register an App ID for the bundle ID you will
-   use, for example `com.yourteam.wearablecapturebridge`.
-2. In Wearables Developer Center, create a DAT project for that exact iOS bundle
-   identifier. Copy its **Meta App ID** and **Client Token**. Do not commit them.
-3. Pair the glasses with the Meta AI app on the test iPhone. In Meta AI, open
+1. Pair the glasses with the Meta AI app on the test iPhone. In Meta AI, open
    **Settings → App Info**, tap **App version** five times, then enable
    **Developer Mode**. Verify glasses firmware is supported and up to date.
-4. Open `ios/ParkPilot/CameraAccess.xcodeproj` in Xcode. In the **CameraAccess**
-   target's **Signing & Capabilities**, select your Apple team and set its bundle
-   identifier to the one from step 1. Automatic signing is already enabled.
-5. Copy the local configuration template, then edit only the ignored local
-   copy with the generated Meta credentials and relay address:
+2. Open `ios/ParkPilot/CameraAccess.xcodeproj` in Xcode. In the **CameraAccess**
+   target's **Signing & Capabilities**, select your Personal Team and retain
+   `com.noviceninja.wearablecapturebridge` as the bundle identifier. Automatic
+   signing creates the development profile once an iPhone is connected.
+3. Copy the local configuration template, then edit only the ignored local
+   copy with the relay address:
 
    ```bash
    cp ios/ParkPilot/Config/CaptureBridge.local.xcconfig.example \
       ios/ParkPilot/Config/CaptureBridge.local.xcconfig
    ```
 
-   Set `META_APP_ID`, `CLIENT_TOKEN`, `CAPTURE_BRIDGE_URL`, and
-   `CAPTURE_BRIDGE_API_KEY` in that file. The Mac LAN IP—not `127.0.0.1`—is
-   required when running on a physical iPhone. The local file is ignored by Git.
-6. Connect the iPhone to the Mac, select it as the run destination, trust the
+   Keep `META_APP_ID = 0` for Meta AI Developer Mode. Set
+   `CAPTURE_BRIDGE_URL` and `CAPTURE_BRIDGE_API_KEY`. The Mac LAN IP—not
+   `127.0.0.1`—is required when running on a physical iPhone. The local file is
+   ignored by Git.
+4. Connect the iPhone to the Mac, select it as the run destination, trust the
    development certificate if iOS asks, and press Run. In the app, select
    **Connect**, complete the Meta AI callback, start the session, then Preview.
-7. Tap **Capture & expose** for a JPEG. Optionally record an instruction first.
+5. Tap **Capture & expose** for a JPEG. Optionally record an instruction first.
    The app captures its best available phone location after permission is granted.
    To relay video, use the normal Record control, stop it, then choose **Expose**
    from the video preview.
