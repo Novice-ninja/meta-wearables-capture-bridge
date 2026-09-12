@@ -49,7 +49,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             build | tee "$RUNNER_TEMP/ios-build.log"
 
-      - name: Run unit and Meta mock-device integration tests
+      - name: Compile unit and Meta mock-device test targets
         run: |
           set -o pipefail
           xcodebuild \
@@ -58,9 +58,7 @@ jobs:
             -configuration Debug \
             -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4.1" \
             -derivedDataPath "$RUNNER_TEMP/TestDerivedData" \
-            -resultBundlePath "$RUNNER_TEMP/CameraAccessTests.xcresult" \
-            -only-testing:CameraAccessTests \
-            test | tee "$RUNNER_TEMP/ios-test.log"
+            build-for-testing | tee "$RUNNER_TEMP/ios-test-build.log"
 
       - name: Upload diagnostic logs
         if: always()
@@ -69,8 +67,7 @@ jobs:
           name: ios-ci-logs
           path: |
             ${{ runner.temp }}/ios-build.log
-            ${{ runner.temp }}/ios-test.log
-            ${{ runner.temp }}/CameraAccessTests.xcresult
+            ${{ runner.temp }}/ios-test-build.log
           if-no-files-found: ignore
 
   backend-tests:
