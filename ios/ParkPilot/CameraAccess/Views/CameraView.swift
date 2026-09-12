@@ -103,6 +103,9 @@ struct CameraView: View {
     } message: {
       Text("To preview your glasses camera, you'll be taken to the Meta AI app to grant access, then returned here.")
     }
+    .onAppear {
+      viewModel.activate()
+    }
     .navigationBarHidden(true)
   }
 

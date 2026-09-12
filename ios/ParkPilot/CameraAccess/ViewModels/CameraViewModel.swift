@@ -171,6 +171,7 @@ final class CameraViewModel {
 
   @ObservationIgnored private var deviceMonitorTask: Task<Void, Never>?
   @ObservationIgnored private var appLifecycleTask: Task<Void, Never>?
+  @ObservationIgnored private var isActivated = false
   @ObservationIgnored private let sessionTokenBag = ListenerTokenBag()
   @ObservationIgnored private let streamTokenBag = ListenerTokenBag()
 
@@ -191,6 +192,15 @@ final class CameraViewModel {
     // from the SDK's current snapshot too, otherwise glasses connected before
     // this view model is constructed leave Start session disabled forever.
     self.hasActiveDevice = !wearables.devices.isEmpty
+  }
+
+  /// Starts observation only after SwiftUI has retained this model. `CameraView`
+  /// can be reconstructed many times; doing this work from `init` created orphaned
+  /// selectors whose initial nil events continually disabled the real screen.
+  func activate() {
+    guard !isActivated else { return }
+    isActivated = true
+    NSLog("[CaptureBridge] selector activated: devices=\(wearables.devices.count)")
     startDeviceMonitoring()
     startAppLifecycleMonitoring()
   }
@@ -211,7 +221,18 @@ final class CameraViewModel {
   func startSession() {
     guard !hasSession else { return }
     do throws(DeviceSessionError) {
-      let session = try wearables.createSession(deviceSelector: deviceSelector)
+      // On a cold start the automatic selector can briefly report nil even
+      // though the SDK has already discovered the paired glasses. Target that
+      // known device directly so `start()` can establish its data link instead
+      // of leaving the user with a permanently disabled control.
+      let session: DeviceSession
+      if deviceSelector.activeDevice == nil, let knownDevice = wearables.devices.first {
+        session = try wearables.createSession(
+          deviceSelector: SpecificDeviceSelector(device: knownDevice)
+        )
+      } else {
+        session = try wearables.createSession(deviceSelector: deviceSelector)
+      }
       deviceSession = session
       // Subscribe before start() so no initial state transitions are missed.
       observeSession(session)
@@ -437,7 +458,10 @@ final class CameraViewModel {
     deviceMonitorTask = Task { [weak self] in
       guard let self else { return }
       for await deviceId in deviceSelector.activeDeviceStream() {
-        hasActiveDevice = deviceId != nil
+        // Keep the session affordance available for a discovered device while
+        // its automatic selector is still negotiating the data link.
+        hasActiveDevice = deviceId != nil || !wearables.devices.isEmpty
+        NSLog("[CaptureBridge] activeDeviceStream: selected=\(deviceId != nil), known=\(wearables.devices.count)")
       }
     }
   }

@@ -38,6 +38,7 @@ final class WearablesViewModel {
     self.wearables = wearables
     self.devices = wearables.devices
     self.registrationState = wearables.registrationState
+    NSLog("[CaptureBridge] SDK started: registration=\(self.registrationState), devices=\(self.devices.count)")
 
     // Set up device stream immediately to handle MockDevice events
     setupDeviceStreamTask = Task {
@@ -65,6 +66,7 @@ final class WearablesViewModel {
     deviceStreamTask = Task {
       for await devices in wearables.devicesStream() {
         self.devices = devices
+        NSLog("[CaptureBridge] devicesStream: \(devices.count) device(s)")
         // Monitor compatibility for each device
         monitorDeviceCompatibility(devices: devices)
       }
@@ -82,6 +84,7 @@ final class WearablesViewModel {
     for deviceId in devices {
       guard compatibilityListenerTokens[deviceId] == nil else { continue }
       guard let device = wearables.deviceForIdentifier(deviceId) else { continue }
+      NSLog("[CaptureBridge] device: name=\(device.nameOrId()), link=\(device.linkState), compatibility=\(device.compatibility())")
       deviceCompatibility[deviceId] = device.compatibility()
       updateFirmwareUpdateRequired()
 
