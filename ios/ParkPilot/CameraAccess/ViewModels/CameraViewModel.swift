@@ -389,6 +389,24 @@ final class CameraViewModel {
     }
   }
 
+  /// Uploads a real Ray-Ban photo that Meta AI has imported into the iPhone
+  /// library. This keeps the capture bridge usable when DAT's live device data
+  /// channel is unavailable.
+  func exposeImportedPhoto(_ data: Data) {
+    guard !captureBridge.isUploading else { return }
+    guard let image = UIImage(data: data),
+          let jpeg = image.jpegData(compressionQuality: 0.92) else {
+      showImportError()
+      return
+    }
+    Task { await captureBridge.upload(photoData: jpeg) }
+  }
+
+  func showImportError(_ detail: String? = nil) {
+    let suffix = detail.map { "\n\n\($0)" } ?? ""
+    showError("Couldn't load that photo from the library.\(suffix)")
+  }
+
   func toggleRecording() {
     if isRecording {
       Task { await stopVideoRecording() }

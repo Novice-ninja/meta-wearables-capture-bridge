@@ -16,6 +16,7 @@
 //
 
 import MWDATCore
+import PhotosUI
 import SwiftUI
 import UIKit
 
@@ -26,6 +27,7 @@ struct CameraView: View {
   @Bindable var wearablesVM: WearablesViewModel
   @State private var showSettingsMenu: Bool = false
   @State private var isLaunchingUpdate: Bool = false
+  @State private var importedRayBanPhoto: PhotosPickerItem?
 
   init(wearables: WearablesInterface, wearablesVM: WearablesViewModel) {
     self._viewModel = State(wrappedValue: CameraViewModel(wearables: wearables))
@@ -105,6 +107,21 @@ struct CameraView: View {
     }
     .onAppear {
       viewModel.activate()
+    }
+    .onChange(of: importedRayBanPhoto) { _, item in
+      guard let item else { return }
+      Task {
+        defer { importedRayBanPhoto = nil }
+        do {
+          guard let data = try await item.loadTransferable(type: Data.self) else {
+            viewModel.showImportError()
+            return
+          }
+          viewModel.exposeImportedPhoto(data)
+        } catch {
+          viewModel.showImportError(error.localizedDescription)
+        }
+      }
     }
     .navigationBarHidden(true)
   }
@@ -303,9 +320,7 @@ struct CameraView: View {
       } else {
         // Reserved capture-row space + a single persistent button hold the button at
         // a fixed Y across every state.
-        if viewModel.isStreaming {
-          captureBridgePanel
-        }
+        captureBridgePanel
         captureRow
         anchoredPrimaryButton
       }
@@ -353,17 +368,29 @@ struct CameraView: View {
           .clipShape(Capsule())
         }
 
-        Button {
-          viewModel.exposeNextPhoto()
-        } label: {
-          Label("Capture & expose", systemImage: "arrow.up.circle.fill")
-            .font(.system(size: 14, weight: .semibold))
-            .frame(maxWidth: .infinity)
-            .frame(height: 44)
-            .background(Color.blue.opacity(0.85))
-            .clipShape(Capsule())
+        if viewModel.isStreaming {
+          Button {
+            viewModel.exposeNextPhoto()
+          } label: {
+            Label("Capture & expose", systemImage: "arrow.up.circle.fill")
+              .font(.system(size: 14, weight: .semibold))
+              .frame(maxWidth: .infinity)
+              .frame(height: 44)
+              .background(Color.blue.opacity(0.85))
+              .clipShape(Capsule())
+          }
+          .disabled(viewModel.captureBridge.isUploading || viewModel.isCapturingPhoto)
+        } else {
+          PhotosPicker(selection: $importedRayBanPhoto, matching: .images) {
+            Label("Choose Ray-Ban photo", systemImage: "photo.badge.arrow.down")
+              .font(.system(size: 14, weight: .semibold))
+              .frame(maxWidth: .infinity)
+              .frame(height: 44)
+              .background(Color.blue.opacity(0.85))
+              .clipShape(Capsule())
+          }
+          .disabled(viewModel.captureBridge.isUploading)
         }
-        .disabled(viewModel.captureBridge.isUploading || viewModel.isCapturingPhoto)
       }
       .foregroundStyle(.white)
 
