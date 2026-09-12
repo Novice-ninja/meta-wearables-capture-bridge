@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://parkpilot.local/schemas/wearable.capture.v1.schema.json",
+  "title": "Wearable Capture Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "capture_id",
+    "captured_at",
+    "received_at",
+    "source",
+    "metadata",
+    "image"
+  ],
+  "properties": {
+    "schema_version": { "const": "wearable.capture.v1" },
+    "capture_id": { "type": "string", "format": "uuid" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "received_at": { "type": "string", "format": "date-time" },
+    "instruction": { "type": ["string", "null"] },
+    "source": {
+      "type": "object",
+      "required": ["platform", "capture_device", "sdk", "sdk_version"],
+      "properties": {
+        "platform": { "const": "ios" },
+        "capture_device": { "const": "meta_wearable" },
+        "sdk": { "const": "meta-wearables-dat-ios" },
+        "sdk_version": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "metadata": { "type": "object", "additionalProperties": true },
+    "image": { "$ref": "#/$defs/media" },
+    "audio": { "oneOf": [{ "$ref": "#/$defs/media" }, { "type": "null" }] }
+  },
+  "$defs": {
+    "media": {
+      "type": "object",
+      "required": ["content_type", "bytes", "url"],
+      "properties": {
+        "content_type": { "type": "string" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "url": { "type": "string", "format": "uri" }
+      }
+    }
+  }
+}
+

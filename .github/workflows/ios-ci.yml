@@ -1,0 +1,96 @@
+name: iOS CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test with Meta DAT mock device
+    runs-on: macos-26
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26.4.1
+        run: sudo xcode-select -s /Applications/Xcode_26.4.1.app/Contents/Developer
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Resolve Meta DAT package
+        run: |
+          xcodebuild \
+            -resolvePackageDependencies \
+            -project ios/ParkPilot/CameraAccess.xcodeproj \
+            -scheme CameraAccess
+
+      - name: Build iOS app without signing
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/ParkPilot/CameraAccess.xcodeproj \
+            -scheme CameraAccess \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build | tee "$RUNNER_TEMP/ios-build.log"
+
+      - name: Run unit and Meta mock-device integration tests
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/ParkPilot/CameraAccess.xcodeproj \
+            -scheme CameraAccess \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            -only-testing:CameraAccessTests \
+            test | tee "$RUNNER_TEMP/ios-test.log"
+
+      - name: Upload diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ci-logs
+          path: |
+            ${{ runner.temp }}/ios-build.log
+            ${{ runner.temp }}/ios-test.log
+          if-no-files-found: ignore
+
+  backend-tests:
+    name: Capture relay tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Test capture relay
+        run: python -m unittest tests.test_api -v
