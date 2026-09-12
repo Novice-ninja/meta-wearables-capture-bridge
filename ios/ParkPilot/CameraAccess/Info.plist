@@ -27,7 +27,7 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>cameraaccess</string>
+				<string>wearablecapturebridge</string>
 			</array>
 		</dict>
 	</array>
@@ -39,7 +39,7 @@
 	<dict>
 		<key>AppLinkURLScheme</key>
 		<!-- Tell DAT your URL scheme so it can be called back from Meta AI -->
-		<string>cameraaccess://</string>
+		<string>wearablecapturebridge://</string>
 		<key>MetaAppID</key>
 		<!-- Without Developer Mode, this key will need to be set with ID from the app registered in Wearables Developer Center -->
 		<string>$(META_APP_ID)</string>
@@ -74,10 +74,12 @@
 	<string>This app needs camera access to stream from your phone's camera as a mock device feed.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app records an optional spoken instruction using the active iOS audio input, including compatible Bluetooth glasses.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app attaches your current location to a capture so an agent can understand where it was taken.</string>
 	<key>CaptureBridgeURL</key>
-	<string>http://127.0.0.1:8000</string>
+	<string>$(CAPTURE_BRIDGE_URL)</string>
 	<key>CaptureBridgeAPIKey</key>
-	<string></string>
+	<string>$(CAPTURE_BRIDGE_API_KEY)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

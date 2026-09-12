@@ -13,6 +13,9 @@ class CaptureBridgeTests(unittest.TestCase):
         api.DATA_DIR = Path(self.temp_dir.name)
         api.API_KEY = "test-key"
         api.AGENT_WEBHOOK_URL = ""
+        api.OPENCLAW_HOOK_URL = ""
+        api.OPENCLAW_HOOK_TOKEN = ""
+        api.OPENCLAW_AGENT_ID = ""
         self.client = TestClient(api.app)
         self.headers = {"X-Capture-Key": "test-key"}
 
@@ -50,6 +53,27 @@ class CaptureBridgeTests(unittest.TestCase):
         listed = self.client.get("/v1/captures", headers=self.headers).json()
         self.assertEqual(listed["items"][0]["capture_id"], capture_id)
 
+    def test_upload_video_without_photo(self):
+        response = self.client.post(
+            "/v1/captures",
+            headers=self.headers,
+            data={
+                "captured_at": "2026-09-12T12:00:00Z",
+                "source_json": '{"platform":"ios","capture_device":"meta_wearable"}',
+            },
+            files={"video": ("capture.mp4", b"video-data", "video/mp4")},
+        )
+        self.assertEqual(response.status_code, 201)
+        manifest = response.json()
+        self.assertIsNone(manifest["image"])
+        self.assertEqual(manifest["video"]["bytes"], 10)
+        self.assertEqual(
+            self.client.get(
+                f'/v1/captures/{manifest["capture_id"]}/video', headers=self.headers
+            ).content,
+            b"video-data",
+        )
+
     def test_requires_key(self):
         response = self.client.post(
             "/v1/captures",
@@ -57,6 +81,24 @@ class CaptureBridgeTests(unittest.TestCase):
             files={"image": ("image.jpg", b"x", "image/jpeg")},
         )
         self.assertEqual(response.status_code, 401)
+
+    def test_rejects_capture_without_photo_or_video(self):
+        response = self.client.post(
+            "/v1/captures",
+            headers=self.headers,
+            data={"captured_at": "2026-09-12T12:00:00Z", "source_json": "{}"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_health_reports_unconfigured_delivery_targets(self):
+        self.assertEqual(
+            self.client.get("/health").json(),
+            {
+                "ok": True,
+                "generic_webhook_configured": False,
+                "openclaw_hook_configured": False,
+            },
+        )
 
 
 if __name__ == "__main__":

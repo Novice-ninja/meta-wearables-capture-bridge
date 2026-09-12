@@ -9,8 +9,7 @@
     "captured_at",
     "received_at",
     "source",
-    "metadata",
-    "image"
+    "metadata"
   ],
   "properties": {
     "schema_version": { "const": "wearable.capture.v1" },
@@ -30,8 +29,9 @@
       "additionalProperties": true
     },
     "metadata": { "type": "object", "additionalProperties": true },
-    "image": { "$ref": "#/$defs/media" },
-    "audio": { "oneOf": [{ "$ref": "#/$defs/media" }, { "type": "null" }] }
+    "image": { "oneOf": [{ "$ref": "#/$defs/media" }, { "type": "null" }] },
+    "audio": { "oneOf": [{ "$ref": "#/$defs/media" }, { "type": "null" }] },
+    "video": { "oneOf": [{ "$ref": "#/$defs/media" }, { "type": "null" }] }
   },
   "$defs": {
     "media": {
@@ -45,4 +45,3 @@
     }
   }
 }
-

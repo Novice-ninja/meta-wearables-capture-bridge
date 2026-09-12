@@ -21,13 +21,19 @@ import SwiftUI
 
 struct CapturePreviewView: View {
   let preview: CapturePreview
+  let onExpose: (CapturePreview) -> Void
   let onDismiss: () -> Void
 
   @State private var player: AVPlayer?
   @State private var showShareSheet = false
 
-  init(preview: CapturePreview, onDismiss: @escaping () -> Void) {
+  init(
+    preview: CapturePreview,
+    onExpose: @escaping (CapturePreview) -> Void,
+    onDismiss: @escaping () -> Void
+  ) {
     self.preview = preview
+    self.onExpose = onExpose
     self.onDismiss = onDismiss
     if case .video(let url) = preview {
       _player = State(initialValue: AVPlayer(url: url))
@@ -47,10 +53,17 @@ struct CapturePreviewView: View {
           .clipShape(RoundedRectangle(cornerRadius: 12))
           .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
 
-        CircleButton(icon: "square.and.arrow.up", text: "Share") {
-          showShareSheet = true
+        HStack(spacing: 28) {
+          CircleButton(icon: "arrow.up.circle.fill", text: "Expose") {
+            onExpose(preview)
+          }
+          .accessibilityIdentifier("expose_preview_button")
+
+          CircleButton(icon: "square.and.arrow.up", text: "Share") {
+            showShareSheet = true
+          }
+          .accessibilityIdentifier("share_button")
         }
-        .accessibilityIdentifier("share_button")
       }
       .padding()
 

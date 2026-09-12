@@ -346,6 +346,22 @@ final class CameraViewModel {
     }
   }
 
+  /// Exposes an existing local preview. Video capture is produced locally from
+  /// the DAT stream, then the completed MP4 is relayed without re-encoding.
+  func exposePreview(_ preview: CapturePreview) {
+    guard !captureBridge.isUploading else { return }
+    switch preview {
+    case .photo(let image):
+      guard let photoData = image.jpegData(compressionQuality: 0.92) else {
+        showError("Couldn't prepare photo for upload.")
+        return
+      }
+      Task { await captureBridge.upload(photoData: photoData) }
+    case .video(let url):
+      Task { await captureBridge.upload(videoURL: url) }
+    }
+  }
+
   func toggleRecording() {
     if isRecording {
       Task { await stopVideoRecording() }

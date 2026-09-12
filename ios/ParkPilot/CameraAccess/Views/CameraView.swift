@@ -52,6 +52,7 @@ struct CameraView: View {
       if let preview = viewModel.activePreview {
         CapturePreviewView(
           preview: preview,
+          onExpose: { viewModel.exposePreview($0) },
           onDismiss: { viewModel.dismissCapturePreview() }
         )
         .transition(.opacity)

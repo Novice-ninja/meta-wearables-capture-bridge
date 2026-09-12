@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreLocation
 import Foundation
 import Observation
 import UIKit
@@ -12,7 +13,7 @@ struct CaptureManifestResponse: Decodable {
 }
 
 /// Collects a short voice instruction from the current iOS audio route and
-/// uploads it with the next DAT photo. When Ray-Ban audio is available as a
+/// uploads it with the next DAT photo or recorded video. When Ray-Ban audio is available as a
 /// Bluetooth HFP input, AVAudioSession selects that route; otherwise iPhone mic
 /// is used. The server manifest records the actual input route.
 @Observable
@@ -28,6 +29,7 @@ final class CaptureBridge {
   private var audioURL: URL?
   private var recordedAudioInputName = "none"
   private var recordedAudioInputType = "none"
+  private let locationCollector = LocationMetadataCollector()
 
   func toggleInstructionRecording() {
     if isRecordingInstruction {
@@ -92,13 +94,34 @@ final class CaptureBridge {
   }
 
   func upload(photoData: Data) async {
+    await upload(imageData: photoData, videoData: nil)
+  }
+
+  func upload(videoURL: URL) async {
+    do {
+      await upload(imageData: nil, videoData: try Data(contentsOf: videoURL))
+    } catch {
+      status = "Couldn't read recorded video: \(error.localizedDescription)"
+    }
+  }
+
+  private func upload(imageData: Data?, videoData: Data?) async {
     if isRecordingInstruction { stopInstructionRecording() }
-    guard let baseURLText = Bundle.main.object(forInfoDictionaryKey: "CaptureBridgeURL") as? String,
-      let url = URL(string: baseURLText)?.appendingPathComponent("v1/captures")
-    else {
-      status = "Set CaptureBridgeURL in Info.plist"
+    guard imageData != nil || videoData != nil else {
+      status = "Nothing to upload"
       return
     }
+    guard let baseURLText = Bundle.main.object(forInfoDictionaryKey: "CaptureBridgeURL") as? String,
+      !baseURLText.contains("$("),
+      let baseURL = URL(string: baseURLText),
+      let scheme = baseURL.scheme,
+      ["http", "https"].contains(scheme),
+      baseURL.host != nil
+    else {
+      status = "Set CAPTURE_BRIDGE_URL in Xcode Build Settings"
+      return
+    }
+    let url = baseURL.appendingPathComponent("v1/captures")
 
     isUploading = true
     status = "Uploading capture…"
@@ -112,11 +135,17 @@ final class CaptureBridge {
         "sdk_version": "0.9.0",
       ]
       var metadata: [String: Any] = [
-        "image_origin": "MWDATCamera.PhotoData",
+        "capture_kind": imageData == nil ? "video" : "photo",
         "audio_input": recordedAudioInputName,
         "audio_input_type": recordedAudioInputType,
       ]
+      if imageData != nil {
+        metadata["image_origin"] = "MWDATCamera.PhotoData"
+      }
       metadata["phone_model"] = UIDevice.current.model
+      if let location = locationCollector.snapshot() {
+        metadata["location"] = location
+      }
 
       let boundary = "CaptureBridge-\(UUID().uuidString)"
       var body = Data()
@@ -126,7 +155,16 @@ final class CaptureBridge {
       if !instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         body.appendFormField("instruction", value: instruction, boundary: boundary)
       }
-      body.appendFileField("image", filename: "capture.jpg", contentType: "image/jpeg", data: photoData, boundary: boundary)
+      if let imageData {
+        body.appendFileField(
+          "image", filename: "capture.jpg", contentType: "image/jpeg", data: imageData, boundary: boundary
+        )
+      }
+      if let videoData {
+        body.appendFileField(
+          "video", filename: "capture.mp4", contentType: "video/mp4", data: videoData, boundary: boundary
+        )
+      }
       if let audioURL, let audioData = try? Data(contentsOf: audioURL) {
         body.appendFileField("audio", filename: "instruction.m4a", contentType: "audio/mp4", data: audioData, boundary: boundary)
       }
@@ -162,6 +200,51 @@ final class CaptureBridge {
   private func cleanupAudio() {
     if let audioURL { try? FileManager.default.removeItem(at: audioURL) }
     audioURL = nil
+  }
+}
+
+/// Captures a best-effort current iPhone location for the media manifest. It
+/// never blocks capture/upload: the first call requests permission and later
+/// captures include the most recently delivered location when permission is on.
+private final class LocationMetadataCollector: NSObject, CLLocationManagerDelegate {
+  private let manager = CLLocationManager()
+  private var latestLocation: CLLocation?
+
+  override init() {
+    super.init()
+    manager.delegate = self
+    manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+  }
+
+  func snapshot() -> [String: Any]? {
+    guard CLLocationManager.locationServicesEnabled() else { return nil }
+    switch manager.authorizationStatus {
+    case .notDetermined:
+      manager.requestWhenInUseAuthorization()
+    case .authorizedAlways, .authorizedWhenInUse:
+      manager.requestLocation()
+    case .denied, .restricted:
+      break
+    @unknown default:
+      break
+    }
+    guard let location = latestLocation else { return nil }
+    return [
+      "latitude": location.coordinate.latitude,
+      "longitude": location.coordinate.longitude,
+      "horizontal_accuracy_meters": location.horizontalAccuracy,
+      "captured_at": ISO8601DateFormatter().string(from: location.timestamp),
+    ]
+  }
+
+  func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    latestLocation = locations.last
+  }
+
+  func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+    if status == .authorizedAlways || status == .authorizedWhenInUse {
+      manager.requestLocation()
+    }
   }
 }
 
