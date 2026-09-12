@@ -1,0 +1,6 @@
+// Copy this file to CaptureBridge.local.xcconfig. That file is ignored by Git.
+// Do not place your real token in CaptureBridge.xcconfig or project.pbxproj.
+META_APP_ID = <Meta App ID>
+CLIENT_TOKEN = <Meta Client Token>
+CAPTURE_BRIDGE_URL = http://<Mac LAN IP>:8000
+CAPTURE_BRIDGE_API_KEY = <relay API key>

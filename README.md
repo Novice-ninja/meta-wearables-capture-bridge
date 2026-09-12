@@ -52,17 +52,17 @@ Open `http://127.0.0.1:8000/docs` for the generated API explorer.
 4. Open `ios/ParkPilot/CameraAccess.xcodeproj` in Xcode. In the **CameraAccess**
    target's **Signing & Capabilities**, select your Apple team and set its bundle
    identifier to the one from step 1. Automatic signing is already enabled.
-5. In **Build Settings**, add or set these user-defined settings for the
-   **CameraAccess** target:
+5. Copy the local configuration template, then edit only the ignored local
+   copy with the generated Meta credentials and relay address:
 
-   ```text
-   META_APP_ID = <Meta App ID>
-   CLIENT_TOKEN = <Meta Client Token>
-   CAPTURE_BRIDGE_URL = http://<Mac LAN IP>:8000
-   CAPTURE_BRIDGE_API_KEY = hackathon-secret
+   ```bash
+   cp ios/ParkPilot/Config/CaptureBridge.local.xcconfig.example \
+      ios/ParkPilot/Config/CaptureBridge.local.xcconfig
    ```
 
-   The Mac LAN IP—not `127.0.0.1`—is required when running on a physical iPhone.
+   Set `META_APP_ID`, `CLIENT_TOKEN`, `CAPTURE_BRIDGE_URL`, and
+   `CAPTURE_BRIDGE_API_KEY` in that file. The Mac LAN IP—not `127.0.0.1`—is
+   required when running on a physical iPhone. The local file is ignored by Git.
 6. Connect the iPhone to the Mac, select it as the run destination, trust the
    development certificate if iOS asks, and press Run. In the app, select
    **Connect**, complete the Meta AI callback, start the session, then Preview.

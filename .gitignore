@@ -4,6 +4,8 @@ __pycache__/
 *.py[cod]
 backend/data/
 .env
+ios/ParkPilot/Config/CaptureBridge.local.xcconfig
 *.xcresult
 DerivedData/
 build/
+**/xcuserdata/
