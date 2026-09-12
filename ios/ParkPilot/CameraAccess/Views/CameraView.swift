@@ -237,15 +237,29 @@ struct CameraView: View {
       }
       .overlay(alignment: .trailing) {
         if showSettingsMenu {
-          CustomButton(
-            title: "Disconnect",
-            style: .destructive,
-            isDisabled: wearablesVM.registrationState != .registered
-          ) {
-            wearablesVM.disconnectGlasses()
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { showSettingsMenu = false }
+          VStack(spacing: 8) {
+            CustomButton(
+              title: "Check glasses app",
+              style: .primary,
+              isDisabled: isLaunchingUpdate
+            ) {
+              isLaunchingUpdate = true
+              Task {
+                await wearablesVM.openDATGlassesAppUpdate()
+                isLaunchingUpdate = false
+              }
+            }
+
+            CustomButton(
+              title: "Disconnect",
+              style: .destructive,
+              isDisabled: wearablesVM.registrationState != .registered
+            ) {
+              wearablesVM.disconnectGlasses()
+              withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { showSettingsMenu = false }
+            }
           }
-          .frame(width: 120)
+          .frame(width: 190)
           .offset(y: 44)
           .transition(.scale(scale: 0.01, anchor: .topTrailing).combined(with: .opacity))
         }
