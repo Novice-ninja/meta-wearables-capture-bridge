@@ -53,14 +53,20 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>
+		<!-- Bluetooth Classic DAT transport for com.meta.ar.wearable. -->
+		<string>external-accessory</string>
 		<string>bluetooth-central</string>
 		<string>audio</string>
 		<string>bluetooth-peripheral</string>
 	</array>
+	<key>UISupportedExternalAccessoryProtocols</key>
+	<array>
+		<string>com.meta.ar.wearable</string>
+	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Needed to connect to Meta AI Glasses</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>This lets your phone find and connect to your glasses over Wi-Fi.</string>
+	<string>This lets your phone send captures to your local relay on the network.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_bonjour._tcp</string>

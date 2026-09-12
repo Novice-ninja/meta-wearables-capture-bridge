@@ -282,10 +282,12 @@ final class CameraViewModel {
     // hvc1 (compressed HEVC) so frames can be written to file in passthrough mode.
     // Phone-mic audio for sound-in-video is captured app-side by AudioCaptureHandler,
     // so the SDK stream needs only the public video config (no audio codec).
+    // Bluetooth Classic is the intentional transport for Personal Team builds.
+    // A low-rate preview leaves bandwidth for the JPEG emitted by capturePhoto().
     let config = StreamConfiguration(
       videoCodec: VideoCodec.hvc1,
       resolution: StreamingResolution.low,
-      frameRate: 24
+      frameRate: 15
     )
 
     do {

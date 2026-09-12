@@ -19,12 +19,6 @@ final class CameraAccessUITests: XCTestCase {
   private var pairedDeviceId: String!
   // swiftlint:enable implicitly_unwrapped_optional
 
-  /// The iOS Local Network permission is a one-shot, per-install grant: once
-  /// answered it persists across app relaunches, so the system dialog only
-  /// appears on the first stream in the whole run. Tracked here so later tests
-  /// skip the (otherwise wasted) wait for a prompt that will never reappear.
-  private static var didAllowLocalNetwork = false
-
   override func setUpWithError() throws {
     continueAfterFailure = false
     removeStalePortFiles()
@@ -156,27 +150,8 @@ final class CameraAccessUITests: XCTestCase {
 
     confirmCameraPermission()
 
-    // Streaming runs over Wi-Fi (the high link level), so the first stream triggers
-    // the iOS system Local Network permission dialog. It blocks the stream until
-    // answered, so allow it before waiting for the streaming state.
-    allowLocalNetworkPermissionIfNeeded()
-
     let stopPreview = app.buttons["stop_preview_button"]
     XCTAssertTrue(stopPreview.waitForExistence(timeout: timeout), "Preview should be streaming (Stop Preview shown)")
-  }
-
-  /// Allows the iOS system Local Network permission dialog on the first stream.
-  /// The dialog is presented by SpringBoard, not the app, so it is tapped through
-  /// the springboard element rather than `app.alerts`. Best-effort: once granted
-  /// the dialog never reappears, so later calls return without waiting.
-  private func allowLocalNetworkPermissionIfNeeded() {
-    guard !Self.didAllowLocalNetwork else { return }
-    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-    let allow = springboard.buttons["Allow"]
-    if allow.waitForExistence(timeout: 10) {
-      allow.tap()
-      Self.didAllowLocalNetwork = true
-    }
   }
 
   /// Camera is denied by default in the mock, so the first preview surfaces the

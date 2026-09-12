@@ -19,6 +19,13 @@ iOS Capture Bridge ──multipart POST──▶ Relay API
 The bridge does **not** recognize signs, discover parking providers, fill forms,
 take payments, or send parking alerts.
 
+For hackathon testing the app uses Bluetooth Classic DAT transport, not the
+glasses Wi-Fi hotspot. This keeps the iPhone online for relay uploads and avoids
+the Hotspot Configuration and Access Wi-Fi Information entitlements that cannot
+be signed by an Apple Personal Team. Bluetooth has lower image/video throughput,
+so the app uses a 15 FPS low-resolution preview and prioritizes a JPEG when the
+user taps **Capture & expose**.
+
 ## Run the relay
 
 ```bash
