@@ -187,6 +187,10 @@ final class CameraViewModel {
     self.wearables = wearables
     self.deviceSelector = AutoDeviceSelector(wearables: wearables)
     self.backgroundStopErrorSuppressionTimeout = backgroundStopErrorSuppressionTimeout
+    // `activeDeviceStream()` emits only when availability changes. Seed the UI
+    // from the SDK's current snapshot too, otherwise glasses connected before
+    // this view model is constructed leave Start session disabled forever.
+    self.hasActiveDevice = !wearables.devices.isEmpty
     startDeviceMonitoring()
     startAppLifecycleMonitoring()
   }
